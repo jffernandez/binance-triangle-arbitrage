@@ -95,10 +95,10 @@ const ArbitrageExecution = {
                 ArbitrageExecution.inProgressSymbols.delete(symbol.b);
                 ArbitrageExecution.inProgressSymbols.delete(symbol.c);
 
-                if (CONFIG.EXECUTION.CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
-                    logger.execution.info(`Cannot exceed user defined execution cap of ${CONFIG.EXECUTION.CAP} executions`);
-                    process.exit(0);
-                }
+                //if (CONFIG.EXECUTION.CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
+                //    logger.execution.info(`Cannot exceed user defined execution cap of ${CONFIG.EXECUTION.CAP} executions`);
+                //    process.exit(0);
+                //}
             });
     },
 
@@ -135,7 +135,7 @@ const ArbitrageExecution = {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCountInLastSecond()} positions have already been attempted in the last second`);
             return false;
         }
-        if (CONFIG.EXECUTION.CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
+        if (CONFIG.EXECUTION.CAP && ArbitrageExecution.inProgressIds.size >= CONFIG.EXECUTION.CAP) {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCount()} executions have been attempted`);
             return false;
         }
