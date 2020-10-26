@@ -54,6 +54,11 @@ SpeedTest.multiPing(5)
         }
     })
     .then(() => {
+        // listen for price changes
+        console.log(`Registrando stream para comparación de precios ...`);
+        return BinanceApi.prevDay(false, pricesUpdateCallback);
+    })
+    .then(() => {
         console.log(`Waiting for all tickers to receive initial depth snapshot ...`);
         return MarketCache.waitForAllTickersToUpdate(10000);
     })
@@ -79,13 +84,15 @@ function arbitrageCycleScheduled() {
     if (isSafeToCalculateArbitrage()) {
         const startTime = Date.now();
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
+        const prices = MarketCache.prices;
 
         const results = CalculationNode.analyze(
             MarketCache.trades,
             depthSnapshots,
             (e) => logger.performance.warn(e),
             ArbitrageExecution.isSafeToExecute,
-            ArbitrageExecution.executeCalculatedPosition
+            ArbitrageExecution.executeCalculatedPosition,
+            prices
         );
 
         if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
@@ -99,17 +106,27 @@ function arbitrageCycleCallback(ticker) {
     if (!isSafeToCalculateArbitrage()) return;
     const startTime = Date.now();
     const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.related.tickers[ticker]);
+    const prices = MarketCache.prices[ticker];
 
     const results = CalculationNode.analyze(
         MarketCache.related.trades[ticker],
         depthSnapshots,
         (e) => logger.performance.warn(e),
         ArbitrageExecution.isSafeToExecute,
-        ArbitrageExecution.executeCalculatedPosition
+        ArbitrageExecution.executeCalculatedPosition,
+        prices
     );
 
     if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
     statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
+}
+
+function pricesUpdateCallback(n, data) {
+    data.filter(d => MarketCache.tickers.watching.includes(d.symbol)).forEach(d => {
+        MarketCache.prices[d.symbol] = {}
+        MarketCache.prices[d.symbol]['BUY'] = parseFloat(d.bestBid);
+        MarketCache.prices[d.symbol]['SELL'] = parseFloat(d.bestAsk);
+    });
 }
 
 function isSafeToCalculateArbitrage() {

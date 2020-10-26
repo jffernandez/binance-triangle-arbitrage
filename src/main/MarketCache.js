@@ -13,6 +13,7 @@ const MarketCache = {
         trades: {},
         tickers: {}
     },
+    prices: {},
 
     initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
         // Mapping and Filters

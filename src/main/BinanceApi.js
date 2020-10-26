@@ -145,6 +145,10 @@ const BinanceApi = {
         return depth;
     },
 
+    prevDay(tickers, pricesUpdateCallback) {
+        return binance.websockets.prevDay(tickers, pricesUpdateCallback, true);
+    },
+
 };
 
 module.exports = BinanceApi;

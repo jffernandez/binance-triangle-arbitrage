@@ -27,7 +27,7 @@ const ArbitrageExecution = {
         ArbitrageExecution.inProgressSymbols.add(symbol.b);
         ArbitrageExecution.inProgressSymbols.add(symbol.c);
 
-        logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${Math.max(age.ab, age.bc, age.ca).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
+        logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${Math.max(age.ab, age.bc, age.ca).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}% (${calculated.profit.toFixed(4)}%)`);
 
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then((actual) => {
@@ -104,12 +104,15 @@ const ArbitrageExecution = {
 
     isSafeToExecute(calculated) {
         // Profit Threshold is Not Satisfied
-        if (calculated.percent < CONFIG.EXECUTION.THRESHOLD.PROFIT) return false;
+        // if (calculated.percent < CONFIG.EXECUTION.THRESHOLD.PROFIT) return false;
+        if (calculated.profit < CONFIG.EXECUTION.THRESHOLD.PROFIT) return false;
 
         // Age Threshold is Not Satisfied
         const ageInMilliseconds = Date.now() - Math.min(calculated.depth.ab.eventTime, calculated.depth.bc.eventTime, calculated.depth.ca.eventTime);
-        if (isNaN(ageInMilliseconds) || ageInMilliseconds > CONFIG.EXECUTION.THRESHOLD.AGE) return false;
-
+        if (isNaN(ageInMilliseconds) || ageInMilliseconds > CONFIG.EXECUTION.THRESHOLD.AGE) {
+            logger.execution.trace(`Blocking execution because ${calculated.id} age is too old (${ageInMilliseconds})`);
+            return false;
+        }
         const { symbol } = calculated.trade;
         if (ArbitrageExecution.inProgressSymbols.has(symbol.a)) {
             logger.execution.trace(`Blocking execution because ${symbol.a} is currently involved in an execution`);
